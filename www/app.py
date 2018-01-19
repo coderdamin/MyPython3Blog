@@ -16,9 +16,9 @@ def init_jinja2(app, **kw):
         autoescape = kw.get('autoescape', True),
         block_start_string = kw.get('block_start_string', '{%'),
         block_end_string = kw.get('block_end_string', '%}'),
-        variable_start_string = kw.get('variable_start_string', "{{");
-        variable_end_string = kw.get('variable_end_string', '}}');
-        auto_reload = kw.get('auto_reload', True);
+        variable_start_string = kw.get('variable_start_string', "{{"),
+        variable_end_string = kw.get('variable_end_string', '}}'),
+        auto_reload = kw.get('auto_reload', True)
     );
     path = kw.get('path', None);
     if (path is None):
@@ -37,8 +37,8 @@ async def logger_factory(app, handler):
         return await handler(request);
     return logger;
 
-@web.middlewart
-def mw_data(request, handler):
+@web.middleware
+async def mw_data(request, handler):
     if (request.method == 'POST'):
         if (request.content_type.startswith('application/json')):
             request.__data__ = await request.json();
@@ -50,12 +50,13 @@ def mw_data(request, handler):
             # and 'multipart/form-data' form’s data encoding (e.g. <form enctype="multipart/form-data">). 
             request.__data__ = await request.post(); 
             logging.info('request form: %s'%str(request.__data__));
-    return await handler(request);
+    return (await handler(request));
     
 
-@wab.middleware
-def mw_response(request, handler):
+@web.middleware
+async def mw_response(request, handler):
     r = await handler(request);
+    print(str(r));
     if isinstance(r, web.StreamResponse):
         return r;    
     elif isinstance(r, bytes):

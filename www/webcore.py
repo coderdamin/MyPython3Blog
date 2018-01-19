@@ -120,7 +120,7 @@ class RequestHandler(object):
                     return web.HTTPBadRequest('Unsupported Content Type : %s'%(request.content_type));
 
             elif (request.method == 'GET'):
-                qs = request.quety_string;
+                qs = request.query_string;
                 if qs:
                     kw = dict();
                     for k, v in parse.parse_qs(qs, True).items():
@@ -144,14 +144,14 @@ class RequestHandler(object):
             
             if self._has_request_arg:
                 # 写死了变量名
-                ke['request'] = request;
+                kw['request'] = request;
             
             #check required kw:
             if self._required_kw_args:
                 for name in self._required_kw_args:
                     if not(name in kw):
                         return web.HTTPBadRequest('Missing argument:%s'%(name));
-            logging.info('call with args: %s'%str(ks));
+            logging.info('call with args: %s'%str(kw));
             try:
                 r = await self._func(**kw);
                 return r;
@@ -170,7 +170,7 @@ def add_route(app, fn):
         raise ValueError('@get or @past not defined in %s.'%str(fn));
     if (not asyncio.iscoroutinefunction(fn)) and (not inspect.isgeneratorfunction(fn)):
         fn = asyncio.coroutine(fn);
-    logging.info('add route %s %s => %s(%s)'%(method, path, fn.__name__, ', '.join(inspect.signature(fn).parametes.keys())));
+    logging.info('add route %s %s => %s(%s)'%(method, path, fn.__name__, ', '.join(inspect.signature(fn).parameters.keys())));
     app.router.add_route(method, path, RequestHandler(app, fn));
 
 def add_routes(app, module_name):
@@ -186,6 +186,6 @@ def add_routes(app, module_name):
         fn = getattr(mod, attr);
         if callable(fn):
             method = getattr(fn, '__method__', None);
-            path = getattr(fn, '__path__', None);
+            path = getattr(fn, '__route__', None);
             if method and path:
                 add_route(app, fn);

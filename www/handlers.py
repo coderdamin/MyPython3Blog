@@ -4,6 +4,7 @@ __autor__ = 'ZAM';
 
 from webcore import get, post;
 from user import User;
+import logging;
 
 # @get("/blog/{id}")
 # def get_blog(id):
@@ -18,7 +19,8 @@ from user import User;
 #     pass;
 
 @get('/')
-def index(request):
+async def index(request):
+    logging.info('<handler get> index(%s)'%str(request));
     users = await User.findAll();
     return {
         '__template__' : 'test.html',

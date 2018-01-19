@@ -6,8 +6,9 @@ import logging;
 import aiomysql;
 import asyncio;
 
-def sqlLog(sql, args = {}):
-    logging.info('SQL:%s'%sql, args);
+def sqlLog(sql, args = ()):
+    # logging.info('SQL:%s'%sql, args);
+    logging.info('SQL:%s args:%s'%(sql, str(args)));
 
 @asyncio.coroutine
 def create_pool(loop, **kw):
@@ -32,7 +33,7 @@ async def select(sql, args, size = None):
     global __pool;
     with await __pool as conn:
         cur = await conn.cursor(aiomysql.DictCursor);
-        await cur.execute(sql.replace('?', '%s'), args or {});
+        await cur.execute(sql.replace('?', '%s'), args or ());
         if size:
             rs = await cur.fetchmany(size);
         else:
