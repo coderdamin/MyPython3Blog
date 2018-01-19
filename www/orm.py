@@ -167,11 +167,11 @@ class Model(dict, metaclass=ModelMetaclass):
         if (rows != 1):
             logging.warn('failed to remove by primary key: affected rows: %s'%rows);
 
-    @asyncio.coroutine
-    def save(self):
+    @classmethod
+    async def save(self):
         args = list(map(self.getValueOrDefault, self.__fields__));
         args.append(self.getValueOrDefault(self.__primary_key__));
-        rows = yield from execute(self.__insert__, args);
+        rows = await execute(self.__insert__, args);
         if (rows != 1):
             logging.warn('Failed to Insert record: affected rows: %s'%rows);
 
