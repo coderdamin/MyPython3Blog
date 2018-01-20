@@ -6,7 +6,7 @@ import config_default;
 
 class Dict(dict):
     def __init__(self, name = (), value = (), **kw):
-        Super(Dict, self).__init__(**kw);
+        super(Dict, self).__init__(**kw);
         for k,v in zip(name, value):
             self[k] = v;
     

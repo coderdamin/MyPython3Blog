@@ -46,7 +46,7 @@ def has_request_arg(fn):
         # 此处用参数名判断会不会坑, 可换为使用类型 if isinstance(param, request):
         if name == 'request':
             found = True;
-            break;
+            continue; # break;
         # 如果request参数后面有 *argc **kw 可能会被吞掉，KEYWORD_ONLY这种应该是没有关系的
         if found and (param.kind != inspect.Parameter.VAR_POSITIONAL and param.kind != inspect.Parameter.KEYWORD_ONLY and param.kind != inspect.Parameter.VAR_KEYWORD):
             raise valueError('request parameter must be the last named parameter in function:%s%s'%(fn.__name__, str(sig)));
@@ -113,7 +113,7 @@ class RequestHandler(object):
                     if (not isinstance(params, dict)):
                         return web.HTTPBadRequest('JSON body must be object.');
                     kw = params;
-                elif (ct.startswith('application/x-www-form-urlencoded') or ct.startswith('application/form-data')):
+                elif (ct.startswith('application/x-www-form-urlencoded') or ct.startswith('multipart/form-data')):
                     params = await request.post();
                     kw = dict(**params);
                 else:
@@ -160,14 +160,14 @@ class RequestHandler(object):
 
 def add_static(app):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static');
-    app.router.add_static('/static', path);
+    app.router.add_static('/static/', path);
     logging.info('add static %s => %s'%('/static/', path));
 
 def add_route(app, fn):
     method = getattr(fn, '__method__', None);
     path = getattr(fn, '__route__', None);
     if (path is None) or (method is None):
-        raise ValueError('@get or @past not defined in %s.'%str(fn));
+        raise ValueError('@get or @post not defined in %s.'%str(fn));
     if (not asyncio.iscoroutinefunction(fn)) and (not inspect.isgeneratorfunction(fn)):
         fn = asyncio.coroutine(fn);
     logging.info('add route %s %s => %s(%s)'%(method, path, fn.__name__, ', '.join(inspect.signature(fn).parameters.keys())));

@@ -96,6 +96,7 @@ class Model(dict, metaclass=ModelMetaclass):
         return getattr(self, key, None);
 
     def getValueOrDefault(self, key):
+        logging.info("getValueOrDefault key->%s"%key);
         value = getattr(self, key, None);
         if value is None:
             field = self.__mappings__[key];
@@ -109,7 +110,7 @@ class Model(dict, metaclass=ModelMetaclass):
     @classmethod
     async def find(self, pk):
         'find object by primary key.'
-        rs = await select('%s where `%s`=?'%(self.__select__, cls.__primary_key__), [pk], 1);
+        rs = await select('%s where `%s`=?'%(self.__select__, self.__primary_key__), [pk], 1);
         if (len(rs) == 0):
             return None;
         return self(**rs[0]);
@@ -138,21 +139,22 @@ class Model(dict, metaclass=ModelMetaclass):
                 args.extend(limit);
             else:
                 raise ValueError('Invalid limit value: %s'%str(limit));
-        rs = await select(''.join(sql), args);
+        rs = await select(' '.join(sql), args);
         return [self(**r) for r in rs];
 
     @classmethod
-    async def findNumber(self, where = None, args = None):
-        'find number by where clause.'
+    async def findNumber(self, selectField, where = None, args = None):
+        'find number by selectField and where clause.'
         sql = [self.__select__];
+        sql = ['select %s _num_ from `%s`'%(selectField, self.__table__)];
         if where:
             sql.append('where ');
             sql.append(where);
-        if args is None:
-            args = [];
-        rs = await select(''.join(sql), args);
+        rs = await select(''.join(sql), args, 1);
+        if len(rs) == 0:
+            return None;
+        return rs[0]['_num_'];
 
-    @classmethod
     async def update(self):
         args = list(map(self.getValue, self.__fields__));
         args.append(self.getValue(self.__primary_key__));
@@ -160,15 +162,14 @@ class Model(dict, metaclass=ModelMetaclass):
         if (rows != 1):
             logging.warn('failed to update by primary key: affected rows: %s'%rows);
 
-    @classmethod
     async def remove(self):
         args = [self.getValue(self.__primary_key__)];
         rows = await execute(self.__delete__, args);
         if (rows != 1):
             logging.warn('failed to remove by primary key: affected rows: %s'%rows);
 
-    @classmethod
     async def save(self):
+        logging.info('save fields: %s %s'%(str(self.__fields__), str(self.__primary_key__)));
         args = list(map(self.getValueOrDefault, self.__fields__));
         args.append(self.getValueOrDefault(self.__primary_key__));
         rows = await execute(self.__insert__, args);
